@@ -1,31 +1,89 @@
 var questionBank = [{
-	question: 'Question 1',
-	answer1: '1',
-	answer2: '2',
-	answer3: '3',
-	answer4: '4',
-	solution: '1'
-}, {
-	question: 'Question 2',
-	answer1: '11',
-	answer2: '22',
-	answer3: '33',
-	answer4: '44',
+	question: 'CERN launched the very first website in what year?',
+	answer1: '1975',
+	answer2: '1980',
+	answer3: '1985',
+	answer4: '1990',
 	solution: '2'
 }, {
-	question: 'Question 3',
-	answer1: '111',
-	answer2: '222',
-	answer3: '333',
-	answer4: '444',
-	solution: '3'
+	question: 'The iPhone was released in what year?',
+	answer1: '2004',
+	answer2: '2005',
+	answer3: '2006',
+	answer4: '2007',
+	solution: '4'
+}, {
+	question: 'With over 17 million units produced, what was the highest selling single model of personal computer ever?',
+	answer1: 'TRS-80',
+	answer2: 'Commodore 64',
+	answer3: 'Apple II',
+	answer4: 'Sinclair ZX Spectrum',
+	solution: '2'
 }];
 
 var answersRight = 0;
 var answersWrong = 0;
 var answersTimedOut = 0;
 var questionPosition = 0;
-var timer = setTimeout(timeUp, 4000);
+var timer = new CountDownTimer(30);
+
+function CountDownTimer(duration, granularity) {
+	this.duration = duration;
+	this.granularity = granularity || 1000;
+	this.tickFtns = [];
+	this.running = false;
+}
+
+CountDownTimer.prototype.start = function() {
+	if (this.running) {
+		return;
+	}
+	this.running = true;
+	var start = Date.now(),
+			that = this,
+			diff, obj;
+
+	(function timer() {
+		diff = that.duration - (((Date.now() - start) / 1000) | 0);
+
+		if (diff > 0) {
+			setTimeout(timer, that.granularity);
+		} else {
+			diff = 0;
+			that.running = false;
+		}
+
+		obj = CountDownTimer.parse(diff);
+
+		that.tickFtns.forEach(function(ftn) {
+			ftn.call(this, obj.minutes, obj.seconds);
+		}, that);
+	}());
+};
+
+CountDownTimer.prototype.restart = function (duration) {
+	this.running = false;
+	this.duration = duration;
+	this.start();
+};
+
+CountDownTimer.prototype.onTick = function(ftn) {
+	if (typeof ftn === 'function') {
+		this.tickFtns.push(ftn);
+	}
+	return this;
+};
+
+CountDownTimer.prototype.expired = function() {
+	return !this.running;
+};
+
+CountDownTimer.parse = function(seconds) {
+	return {
+		'minutes': (seconds / 60) | 0,
+		'seconds': (seconds % 60) | 0
+	};
+};
 
 function checkAnswer(guess) {
 	console.log(guess);
@@ -42,11 +100,12 @@ function createQuestion() {
 function timeUp() {
 	console.log("Time is up!");
 	if (questionPosition < questionBank.length - 1) {
-		timer = setTimeout(timeUp, 4000);
 		questionPosition++;
 		answersTimedOut++;
+		timer.restart(30);
 		createQuestion();
 	} else {
+		answersTimedOut++;
 		displayStats();
 	}
 }
@@ -63,12 +122,15 @@ $(document).ready(function() {
 	function createListeners() {
 		
 		$('#answers').click(function(e) {
-			clearTimeout(timer);
-			if (questionPosition < questionBank.length - 1) {
-				timer = setTimeout(timeUp, 4000);
-				questionPosition++;
+			questionPosition++;
+			if (questionPosition < questionBank.length) {
+				timer = new CountDownTimer(30);
+				timer.restart(30);
 				createQuestion();
 				checkAnswer(this);
+			} else if (questionPosition === questionBank.length) {
+				checkAnswer(this);
+				displayStats();
 			} else {
 				displayStats();
 			}
@@ -83,3 +145,21 @@ $(document).ready(function() {
 	createQuestion();
 	createListeners();
 });
+
+function restart() {
+	if (this.expired()) {
+		setTimeout(function() {
+			timeUp();
+		}, 3000);
+	}
+}
+
+function format(minutes, seconds) {
+	minutes = minutes < 10 ? "0" + minutes : minutes;
+	seconds = seconds < 10 ? "0" + seconds : seconds;
+	$('#timer').html(minutes + ':' + seconds);
+};
+
+window.onload = function() {
+	timer.onTick(format).onTick(restart).start();
+}
