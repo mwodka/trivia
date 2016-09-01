@@ -25,76 +25,44 @@ var answersRight = 0;
 var answersWrong = 0;
 var answersTimedOut = 0;
 var questionPosition = 0;
-var timer = new CountDownTimer(30);
+var time = 30;
+var timer;
+var seconds = time;
+var timerIsRunning = false;
 
-function CountDownTimer(duration, granularity) {
-	this.duration = duration;
-	this.granularity = granularity || 1000;
-	this.tickFtns = [];
-	this.running = false;
+function startTimer(seconds) {
+	//if (!timerIsRunning) {
+		timer = setTimeout(timeUp, 1000 * seconds);
+	//	timerIsRunning = true;
+	//}
 }
 
-CountDownTimer.prototype.start = function() {
-	if (this.running) {
-		return;
-	}
-	this.running = true;
-	var start = Date.now(),
-			that = this,
-			diff, obj;
+function restartTimer() {
+	seconds = time;
+	//timerIsRunning = false;
+	clearTimeout(timer);
+	startTimer(time);
+}
 
-	(function timer() {
-		diff = that.duration - (((Date.now() - start) / 1000) | 0);
-
-		if (diff > 0) {
-			setTimeout(timer, that.granularity);
-		} else {
-			diff = 0;
-			that.running = false;
-		}
-
-		obj = CountDownTimer.parse(diff);
-
-		that.tickFtns.forEach(function(ftn) {
-			ftn.call(this, obj.minutes, obj.seconds);
-		}, that);
-	}());
-};
-
-CountDownTimer.prototype.restart = function (duration) {
-	this.running = false;
-	this.duration = duration;
-	this.start();
-};
-
-CountDownTimer.prototype.onTick = function(ftn) {
-	if (typeof ftn === 'function') {
-		this.tickFtns.push(ftn);
-	}
-	return this;
-};
-
-CountDownTimer.prototype.expired = function() {
-	return !this.running;
-};
-
-CountDownTimer.parse = function(seconds) {
-	return {
-		'minutes': (seconds / 60) | 0,
-		'seconds': (seconds % 60) | 0
-	};
-};
+function displayTime() {
+	$('#timer').html(seconds);
+}
 
 function checkAnswer(guess) {
 	console.log(guess);
+	if (guess == questionBank[questionPosition].solution) {
+		answersRight++;
+	} else {
+		answersWrong++;
+	}
 }
 
 function createQuestion() {
 	$('#question').html(questionBank[questionPosition].question);
-	$('#q1').html(questionBank[questionPosition].answer1);
-	$('#q2').html(questionBank[questionPosition].answer2);
-	$('#q3').html(questionBank[questionPosition].answer3);
-	$('#q4').html(questionBank[questionPosition].answer4);
+	$('#a1').html(questionBank[questionPosition].answer1);
+	$('#a2').html(questionBank[questionPosition].answer2);
+	$('#a3').html(questionBank[questionPosition].answer3);
+	$('#a4').html(questionBank[questionPosition].answer4);
 }
 
 function timeUp() {
@@ -102,7 +70,7 @@ function timeUp() {
 	if (questionPosition < questionBank.length - 1) {
 		questionPosition++;
 		answersTimedOut++;
-		timer.restart(30);
+		restartTimer();
 		createQuestion();
 	} else {
 		answersTimedOut++;
@@ -111,55 +79,81 @@ function timeUp() {
 }
 
 function displayStats() {
-	clearTimeout(timer);
 	$('#right').html('Answers right: ' + answersRight);
 	$('#wrong').html('Answers wrong: ' + answersWrong);
 	$('#timeout').html('Unanswered: ' + answersTimedOut);
 }
 
+function createListeners() {
+	
+	$('#a1').click(function(e) {
+		clicked(1);
+	});
+	$('#a2').click(function(e) {
+	clicked(2);
+	});
+
+	$('#a3').click(function(e) {
+		clicked(3);
+	});
+
+	$('#a4').click(function(e) {
+		clicked(4);
+	});
+
+	$('#btn').click(function(e) {
+		restartGame();
+	});
+
+	//debugging information
+	$('*').click(function (e) {
+   		document.title = e.target.tagName + '#' + e.target.id + '.' + e.target.className;
+	});
+}
+
 $(document).ready(function() {
-
-	function createListeners() {
-		
-		$('#answers').click(function(e) {
-			questionPosition++;
-			if (questionPosition < questionBank.length) {
-				timer = new CountDownTimer(30);
-				timer.restart(30);
-				createQuestion();
-				checkAnswer(this);
-			} else if (questionPosition === questionBank.length) {
-				checkAnswer(this);
-				displayStats();
-			} else {
-				displayStats();
-			}
-			e.stopPropagation();
-		});
-
-		//debugging information
-		$('*').click(function (e) {
-    		document.title = e.target.tagName + '#' + e.target.id + '.' + e.target.className;
-		});
-	}
-	createQuestion();
 	createListeners();
 });
 
-function restart() {
-	if (this.expired()) {
-		setTimeout(function() {
-			timeUp();
-		}, 3000);
+window.onload = function() {
+	main();
+}
+
+function clicked(answer) {
+	if (questionPosition < questionBank.length - 1) {
+		checkAnswer(answer);
+		restartTimer(time);
+		questionPosition++;
+		createQuestion();
+	} else if (questionPosition === questionBank.length - 1) {
+		checkAnswer(answer);
+		questionPosition++;
+		displayStats();
+	} else {
+		displayStats();
 	}
 }
 
-function format(minutes, seconds) {
-	minutes = minutes < 10 ? "0" + minutes : minutes;
-	seconds = seconds < 10 ? "0" + seconds : seconds;
-	$('#timer').html(minutes + ':' + seconds);
-};
+function main() {
+	$('#right').empty();
+	$('#wrong').empty();
+	$('#timeout').empty();
+	createQuestion();
+	createListeners();
+	restartTimer(time);
+	var timeInterval = setInterval(function () {
+		displayTime();
+		if (seconds > 0) {
+			seconds--;
+		}
+	}, 1000);
+}
 
-window.onload = function() {
-	timer.onTick(format).onTick(restart).start();
+
+function restartGame() {
+	questionPosition = 0;
+	answersRight = 0;
+	answersWrong = 0;
+	answersTimedOut = 0;
+	main();
 }
