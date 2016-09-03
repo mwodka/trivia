@@ -39,7 +39,7 @@ var answersRight = 0;
 var answersWrong = 0;
 var answersTimedOut = 0;
 var qPosition = 0;
-var time = 10;
+var time = 30;
 var seconds = time;
 var timer;
 var timeIntervalID;
@@ -64,7 +64,7 @@ function checkAnswer(guess) {
 		$('#correct-answer').html('Correct!');
 		setTimeout(function() {
 			$('#correct-answer').empty();
-		}, 2000);
+		}, 3000);
 
 	} else {
 		answersWrong++;
@@ -108,10 +108,9 @@ function timeUp() {
 		answersTimedOut++;
 		restartTimer();
 		createQuestion();
-		seconds = 10;
+		seconds = time;
 	} else if (qPosition === qBank.length - 1) {
 		answersTimedOut++;
-		seconds = 10;
 		displayStats();
 	} else {
 		displayStats();
@@ -159,12 +158,12 @@ function clicked(answer) {
 		restartTimer();
 		qPosition++;
 		createQuestion();
-		seconds = 10;
+		seconds = time;
 	} else if (qPosition === qBank.length - 1) {
 		checkAnswer(answer);
 		qPosition++;
 		displayStats();
-		seconds = 10;
+		seconds = time;
 	} else {
 		displayStats();
 	}
@@ -192,7 +191,7 @@ function restartGame() {
 	answersRight = 0;
 	answersWrong = 0;
 	answersTimedOut = 0;
-	seconds = 10;
+	seconds = time;
 	clearInterval(timeIntervalID);
 	main();
 }
