@@ -88,7 +88,7 @@ function displayAnswer() {
 	}
 	setTimeout(function() {
 		$('#correct-answer').empty();
-	}, 2000);
+	}, 3000);
 }
 
 function createQuestion() {
