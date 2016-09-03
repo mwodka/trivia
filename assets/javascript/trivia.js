@@ -1,4 +1,4 @@
-var questionBank = [{
+var qBank = [{
 	question: 'CERN launched the very first website in what year?',
 	answer1: '1975',
 	answer2: '1980',
@@ -19,27 +19,36 @@ var questionBank = [{
 	answer3: 'Apple II',
 	answer4: 'Sinclair ZX Spectrum',
 	solution: '2'
+}, {
+	question: 'What year was Facebook founded?',
+	answer1: '2003',
+	answer2: '2004',
+	answer3: '2005',
+	answer4: '2006',
+	solution: '2'
+}, {
+	question: 'Who is credited with inventing the fist mechanical computer?',
+	answer1: 'John von Neumann',
+	answer2: 'Alan Turing',
+	answer3: 'Richard Stallman',
+	answer4: 'Charles Babbage',
+	solution: '4'
 }];
 
 var answersRight = 0;
 var answersWrong = 0;
 var answersTimedOut = 0;
-var questionPosition = 0;
-var time = 30;
-var timer;
+var qPosition = 0;
+var time = 10;
 var seconds = time;
-var timerIsRunning = false;
+var timer;
+var timeIntervalID;
 
 function startTimer(seconds) {
-	//if (!timerIsRunning) {
 		timer = setTimeout(timeUp, 1000 * seconds);
-	//	timerIsRunning = true;
-	//}
 }
 
 function restartTimer() {
-	seconds = time;
-	//timerIsRunning = false;
 	clearTimeout(timer);
 	startTimer(time);
 }
@@ -50,85 +59,112 @@ function displayTime() {
 
 function checkAnswer(guess) {
 	console.log(guess);
-	if (guess == questionBank[questionPosition].solution) {
+	if (guess == qBank[qPosition].solution) {
 		answersRight++;
+		$('#correct-answer').html('Correct!');
+		setTimeout(function() {
+			$('#correct-answer').empty();
+		}, 2000);
+
 	} else {
 		answersWrong++;
+		$('#correct-answer').html('Incorrect. The answer was: ');
+		displayAnswer();
 	}
 }
 
+function displayAnswer() {
+	var ans = qBank[qPosition].solution;
+	if (ans === '1') {
+		$('#correct-answer').append(qBank[qPosition].answer1);
+	}
+	else if (ans === '2') {
+		$('#correct-answer').append(qBank[qPosition].answer2);
+	}
+	else if (ans === '3') {
+		$('#correct-answer').append(qBank[qPosition].answer3);
+	} else {
+		$('#correct-answer').append(qBank[qPosition].answer4);
+	}
+	setTimeout(function() {
+		$('#correct-answer').empty();
+	}, 2000);
+}
+
 function createQuestion() {
-	$('#question').html(questionBank[questionPosition].question);
-	$('#a1').html(questionBank[questionPosition].answer1);
-	$('#a2').html(questionBank[questionPosition].answer2);
-	$('#a3').html(questionBank[questionPosition].answer3);
-	$('#a4').html(questionBank[questionPosition].answer4);
+	$('#question').html(qBank[qPosition].question);
+	$('#a1').html(qBank[qPosition].answer1);
+	$('#a2').html(qBank[qPosition].answer2);
+	$('#a3').html(qBank[qPosition].answer3);
+	$('#a4').html(qBank[qPosition].answer4);
 }
 
 function timeUp() {
 	console.log("Time is up!");
-	if (questionPosition < questionBank.length - 1) {
-		questionPosition++;
+	$('#correct-answer').html("Time is up! The answer was: ");
+	displayAnswer();
+	if (qPosition < qBank.length - 1) {
+		qPosition++;
 		answersTimedOut++;
 		restartTimer();
 		createQuestion();
-	} else {
+		seconds = 10;
+	} else if (qPosition === qBank.length - 1) {
 		answersTimedOut++;
+		seconds = 10;
+		displayStats();
+	} else {
 		displayStats();
 	}
 }
 
 function displayStats() {
+	clearTimeout(timer);
 	$('#right').html('Answers right: ' + answersRight);
 	$('#wrong').html('Answers wrong: ' + answersWrong);
 	$('#timeout').html('Unanswered: ' + answersTimedOut);
+	gameOver();
 }
 
 function createListeners() {
 	
-	$('#a1').click(function(e) {
+	$('#a1').click(function() {
 		clicked(1);
 	});
-	$('#a2').click(function(e) {
+	$('#a2').click(function() {
 	clicked(2);
 	});
 
-	$('#a3').click(function(e) {
+	$('#a3').click(function() {
 		clicked(3);
 	});
 
-	$('#a4').click(function(e) {
+	$('#a4').click(function() {
 		clicked(4);
 	});
 
-	$('#btn').click(function(e) {
+	$('#btn').click(function() {
 		restartGame();
-	});
-
-	//debugging information
-	$('*').click(function (e) {
-   		document.title = e.target.tagName + '#' + e.target.id + '.' + e.target.className;
 	});
 }
 
-$(document).ready(function() {
-	createListeners();
-});
-
 window.onload = function() {
+	createListeners();
 	main();
 }
 
 function clicked(answer) {
-	if (questionPosition < questionBank.length - 1) {
+	if (qPosition < qBank.length - 1) {
 		checkAnswer(answer);
-		restartTimer(time);
-		questionPosition++;
+		restartTimer();
+		qPosition++;
 		createQuestion();
-	} else if (questionPosition === questionBank.length - 1) {
+		seconds = 10;
+	} else if (qPosition === qBank.length - 1) {
 		checkAnswer(answer);
-		questionPosition++;
+		qPosition++;
 		displayStats();
+		seconds = 10;
 	} else {
 		displayStats();
 	}
@@ -138,10 +174,11 @@ function main() {
 	$('#right').empty();
 	$('#wrong').empty();
 	$('#timeout').empty();
+	$('#correct-answer').empty();
+	$('#game-over').empty();
 	createQuestion();
-	createListeners();
-	restartTimer(time);
-	var timeInterval = setInterval(function () {
+	restartTimer();
+	timeIntervalID = setInterval(function () {
 		displayTime();
 		if (seconds > 0) {
 			seconds--;
@@ -151,9 +188,17 @@ function main() {
 
 
 function restartGame() {
-	questionPosition = 0;
+	qPosition = 0;
 	answersRight = 0;
 	answersWrong = 0;
 	answersTimedOut = 0;
+	seconds = 10;
+	clearInterval(timeIntervalID);
 	main();
 }
+
+function gameOver() {
+	$('#game-over').html('Game over! Press Restart to try again.');
+}
+
+
